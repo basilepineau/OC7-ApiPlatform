@@ -16,6 +16,27 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
+    public function findByCustomerWithPagination($customer, $page = 1, $limit = 10) {
+        $query = $this->createQueryBuilder('u')
+            ->where('u.customer = :customer')
+            ->setParameter('customer', $customer)
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery();
+
+        return $query->getResult();
+    }
+
+    public function countByCustomer($customer): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.customer = :customer')
+            ->setParameter('customer', $customer)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
 //    /**
 //     * @return User[] Returns an array of User objects
 //     */

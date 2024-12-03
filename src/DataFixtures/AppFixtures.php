@@ -36,7 +36,7 @@ class AppFixtures extends Fixture
     
         $manager->persist($specificCustomer);
     
-        // Création des produits pour cet utilisateur spécifique
+        // Création des produits pour Basile
         for ($j = 1; $j <= 50; $j++) {
             $product = new Product();
             $product->setName("Product $j of Basile");
@@ -46,6 +46,18 @@ class AppFixtures extends Fixture
             $product->setCustomer($specificCustomer); 
     
             $manager->persist($product);
+        }
+
+        // Création des utilisateurs pour Basile
+        for ($k = 1; $k <= 3; $k++) {
+            $user = new User();
+            $user->setCustomer($specificCustomer);
+            $user->setEmail("user$k.basile@example.com");
+            $user->setFirstName("BasileUserFirst$k");
+            $user->setLastName("BasileUserLast$k");
+            $user->setPhone('987654321');
+    
+            $manager->persist($user);
         }
     
         // Création des utilisateurs aléatoires
