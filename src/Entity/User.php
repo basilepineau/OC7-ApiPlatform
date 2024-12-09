@@ -3,11 +3,24 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
 use Hateoas\Configuration\Annotation as Hateoas;
+
+#[Hateoas\Relation(
+    'self',
+    href: new Hateoas\Route(
+        'app_user_details',
+        parameters: ['id' => 'expr(object.getId())']
+    ),
+    exclusion: new Hateoas\Exclusion(groups:["getUsers"])
+)]
+
+#[Hateoas\Relation(
+    "collection",
+    href: new Hateoas\Route("app_users"),
+    exclusion: new Hateoas\Exclusion(groups:["getUsers"])
+)]
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User

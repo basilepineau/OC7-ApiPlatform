@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\ProductRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
@@ -15,7 +13,14 @@ use Hateoas\Configuration\Annotation as Hateoas;
     href: new Hateoas\Route(
         'app_product_details',
         parameters: ['id' => 'expr(object.getId())']
-    )
+    ),
+    exclusion: new Hateoas\Exclusion(groups:["getProducts"])
+)]
+
+#[Hateoas\Relation(
+    "collection",
+    href: new Hateoas\Route("app_products"),
+    exclusion: new Hateoas\Exclusion(groups:["getProducts"])
 )]
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
