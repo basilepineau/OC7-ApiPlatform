@@ -32,8 +32,8 @@ class UserController extends AbstractController
         $customer = $this->getUser();
 
         // Récupérer les paramètres de pagination
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = max(1, (int) $request->query->get('limit', 10));
+        $page = $request->query->get('page', 1);
+        $limit = $request->query->get('limit', 10);
 
         $context = SerializationContext::create()->setGroups(['getUsers']);
 

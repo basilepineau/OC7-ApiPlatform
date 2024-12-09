@@ -4,13 +4,13 @@ namespace App\Controller;
 
 use App\Entity\Product;
 use App\Repository\ProductRepository;
-use JMS\Serializer\SerializationContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
@@ -28,8 +28,8 @@ class ProductController extends AbstractController
         $customer = $this->getUser();
 
         // Récupérer les paramètres de pagination
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = max(1, (int) $request->query->get('limit', 10));
+        $page = $request->query->get('page', 1);
+        $limit = $request->query->get('limit', 10);
 
         $context = SerializationContext::create()->setGroups(['getProducts']);
 
@@ -56,7 +56,7 @@ class ProductController extends AbstractController
     
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
-
+    
     #[Route('/api/product/{id}', name: 'app_product_details', methods: ['GET'])]
     #[IsGranted('view_product_details', subject: 'product', message:"Accès refusé !")] 
     public function getProductDetails(
@@ -77,5 +77,4 @@ class ProductController extends AbstractController
     
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
-    
 }
