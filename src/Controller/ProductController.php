@@ -7,7 +7,6 @@ use App\Repository\ProductRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use JMS\Serializer\SerializationContext;
@@ -18,13 +17,14 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 class ProductController extends AbstractController
 {
     #[Route('/api/products', name: 'app_products', methods: ['GET'])]
-    #[IsGranted('view_products')] 
+    #[IsGranted('view_products', message: "Accès refusé !")] 
     public function getProductsByCustomer(
         ProductRepository $productRepository,
         Request $request,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cachePool
     ): JsonResponse {
+        /** @var \App\Entity\Customer $customer */
         $customer = $this->getUser();
 
         // Récupérer les paramètres de pagination
@@ -54,7 +54,7 @@ class ProductController extends AbstractController
             return $serializer->serialize($data, 'json', $context);
         });
     
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
     }
     
     #[Route('/api/product/{id}', name: 'app_product_details', methods: ['GET'])]
@@ -75,6 +75,6 @@ class ProductController extends AbstractController
             return $serializer->serialize($product, 'json', $context);
         });
     
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
     }
 }

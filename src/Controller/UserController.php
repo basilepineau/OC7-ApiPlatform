@@ -3,32 +3,33 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\CustomerRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use JMS\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
+use Symfony\Component\Serializer\SerializerInterface as SymfonySerializerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserController extends AbstractController
 {
     #[Route('/api/users', name: 'app_users', methods: ['GET'])]
-    #[IsGranted('view_users')] 
+    #[IsGranted('view_users', message: "Accès refusé !")] 
     public function getUsersByCustomer(
         UserRepository $userRepository,
         Request $request,
         SerializerInterface $serializer,
         TagAwareCacheInterface $cachePool
     ): JsonResponse {
+        /** @var \App\Entity\Customer $customer */
         $customer = $this->getUser();
 
         // Récupérer les paramètres de pagination
@@ -58,11 +59,11 @@ class UserController extends AbstractController
             return $serializer->serialize($data, 'json', $context);
         });
     
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
     }
 
     #[Route('/api/user/{id}', name: 'app_user_details', methods: ['GET'])]
-    #[IsGranted('view_user_details', subject: 'user', message:"Accès refusé !")] 
+    #[IsGranted('view_user_details', subject: 'user', message: "Accès refusé !")] 
     public function getUserDetails(
         User $user,
         SerializerInterface $serializer,
@@ -79,39 +80,81 @@ class UserController extends AbstractController
             return $serializer->serialize($user, 'json', $context);
         });
     
-        return new JsonResponse($json, Response::HTTP_OK, [], true);
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
     }
 
-    // #[Route('/api/users', name: 'app_user_create', methods:['POST'])]
-    // public function createUser(Request $request, EntityManagerInterface $em, CustomerRepository $customerRepository, SerializerInterface $serializer) 
-    // {
-    //     $user = $serializer->deserialize($request->getContent(), User::class, 'json');
+    #[Route('/api/user', name: 'app_user_create', methods: ['POST'])]
+    #[IsGranted('create_user', message: "Vous n'avez pas l'autorisation de créer un utilisateur !")]
+    public function createUser(
+        Request $request,
+        EntityManagerInterface $em,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator) 
+    {
+        $user = $serializer->deserialize($request->getContent(), User::class, 'json');
 
-    //     $content = $request->toArray();
+        $errors = $validator->validate($user);
 
-    //     $idCustomer = $content['customerId'] ?? -1;
-    //     $user->setCustomer($customerRepository->find($idCustomer));
+        if (count($errors) > 0) {
+            $errorsString = [];
+            foreach ($errors as $error) {
+                $errorsString[] = $error->getPropertyPath() . ': ' . $error->getMessage();
+            }
+            return new JsonResponse(['errors' => $errorsString], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
-    //     $em->persist($user);
-    //     $em->flush();
+        $customer = $this->getUser();
 
-    //     $json = $serializer->serialize($user, 'json', ['groups' => 'getUsers']);
+        $user->setCustomer($customer);
 
-    //     return new JsonResponse($json, Response::HTTP_CREATED, [], true);
-    // }
+        $em->persist($user);
+        $em->flush();
 
-    // #[Route('/api/user/{id}', name: 'app_user_delete', methods:['DELETE'])]
-    // public function deleteUser(User $user, EntityManagerInterface $em, TokenStorageInterface $tokenStorage)
-    // {
-    //     $customer = $tokenStorage->getToken()?->getUser();
+        $context = SerializationContext::create()->setGroups(['getUsers']);
 
-    //     if ($user->getCustomer()?->getId() !== $customer->getId()) {
-    //         return new JsonResponse(['message' => 'Unauthorized : this user does not belong to you'], Response::HTTP_FORBIDDEN);
-    //     }
-     
-    //     $em->remove($user);
-    //     $em->flush();
+        $json = $serializer->serialize($user, 'json', $context);
+
+        return new JsonResponse($json, JsonResponse::HTTP_CREATED, [], true);
+    }
+
+    #[Route('/api/user/{id}', name: 'app_user_delete', methods:['DELETE'])]
+    #[IsGranted('delete_user', subject: 'user', message: "Vous n'avez pas l'autorisation de supprimer cet utilisateur !")]
+    public function deleteUser(User $user, EntityManagerInterface $em)
+    {
+        $em->remove($user);
+        $em->flush();
         
-    //     return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-    // }
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/api/user/{id}', name: 'app_user_update', methods: ['PUT'])]
+    #[IsGranted('update_user', subject: 'user', message: "Vous n'avez pas l'autorisation de modifier cet utilisateur !")]
+    public function updateUser(
+        Request $request,
+        User $user,
+        SymfonySerializerInterface $serializer, 
+        EntityManagerInterface $em,
+        ValidatorInterface $validator) 
+        {
+        $serializer->deserialize(
+            $request->getContent(),
+            User::class,
+            'json',
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $user]
+        );
+
+        $errors = $validator->validate($user);
+
+        if (count($errors) > 0) {
+            $errorsString = [];
+            foreach ($errors as $error) {
+                $errorsString[] = $error->getPropertyPath() . ': ' . $error->getMessage();
+            }
+            return new JsonResponse(['errors' => $errorsString], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $em->flush();
+    
+        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+    }
 }

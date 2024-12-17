@@ -6,6 +6,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use JMS\Serializer\Annotation\Groups;
 use Hateoas\Configuration\Annotation as Hateoas;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[Hateoas\Relation(
     'self',
@@ -13,13 +14,13 @@ use Hateoas\Configuration\Annotation as Hateoas;
         'app_user_details',
         parameters: ['id' => 'expr(object.getId())']
     ),
-    exclusion: new Hateoas\Exclusion(groups:["getUsers"])
+    exclusion: new Hateoas\Exclusion(groups: ["getUsers"])
 )]
 
 #[Hateoas\Relation(
     "collection",
     href: new Hateoas\Route("app_users"),
-    exclusion: new Hateoas\Exclusion(groups:["getUsers"])
+    exclusion: new Hateoas\Exclusion(groups: ["getUsers"])
 )]
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -32,18 +33,43 @@ class User
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le prénom est obligatoire.")]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères."
+    )]
     #[Groups(['getUsers'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom est obligatoire.")]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "Le nom ne peut pas dépasser {{ limit }} caractères."
+    )]
     #[Groups(['getUsers'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "L'email est obligatoire.")]
+    #[Assert\Email(message: "L'email {{ value }} n'est pas valide.")]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: "L'email ne peut pas dépasser {{ limit }} caractères."
+    )]
     #[Groups(['getUsers'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le téléphone est obligatoire.")]
+    #[Assert\Length(
+        max: 15,
+        maxMessage: "Le numéro de téléphone ne peut pas dépasser {{ limit }} caractères."
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9+\-\s]+$/",
+        message: "Le numéro de téléphone ne doit contenir que des chiffres, espaces, + ou -."
+    )]
     #[Groups(['getUsers'])]
     private ?string $phone = null;
 
