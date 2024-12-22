@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\SerializationContext;
+use JMS\Serializer\Serializer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -132,16 +133,25 @@ class UserController extends AbstractController
     public function updateUser(
         Request $request,
         User $user,
-        SymfonySerializerInterface $serializer, 
+        SerializerInterface $serializer,
         EntityManagerInterface $em,
         ValidatorInterface $validator) 
         {
-        $serializer->deserialize(
-            $request->getContent(),
-            User::class,
-            'json',
-            [AbstractNormalizer::OBJECT_TO_POPULATE => $user]
-        );
+
+        $newUser = $serializer->deserialize($request->getContent(), User::class, 'json');
+
+        if ($newUser->getFirstName() !== null) {
+            $user->setFirstName($newUser->getFirstName());
+        }
+        if ($newUser->getLastName() !== null) {
+            $user->setLastName($newUser->getLastName());
+        }
+        if ($newUser->getEmail() !== null) {
+            $user->setEmail($newUser->getEmail());
+        }
+        if ($newUser->getPhone() !== null) {
+            $user->setPhone($newUser->getPhone());
+        }
 
         $errors = $validator->validate($user);
 
@@ -154,7 +164,10 @@ class UserController extends AbstractController
         }
 
         $em->flush();
-    
-        return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
+
+        $context = SerializationContext::create()->setGroups(['getUsers']);
+        $jsonUser = $serializer->serialize($user, 'json', $context);
+
+        return new JsonResponse($jsonUser, JsonResponse::HTTP_OK, ['accept' => 'json'], true);
     }
 }
