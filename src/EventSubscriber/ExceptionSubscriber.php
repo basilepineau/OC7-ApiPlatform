@@ -6,6 +6,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 class ExceptionSubscriber implements EventSubscriberInterface
@@ -13,6 +14,17 @@ class ExceptionSubscriber implements EventSubscriberInterface
     public function onKernelException(ExceptionEvent $event): void
     {
         $exception = $event->getThrowable();
+
+        if ($exception instanceof NotFoundHttpException) {
+                // Message générique pour d'autres entités ou ressources
+            $data = [
+                'status' => 404,
+                'message' => 'La ressource demandée n\'existe pas.',
+            ];
+
+            $event->setResponse(new JsonResponse($data));
+            return;
+        }
 
         if ($exception instanceof HttpException) {
             $data = [
