@@ -44,9 +44,9 @@ class ProductController extends AbstractController
                 'data' => $products,
                 'pagination' => [
                     'total' => $total,
-                    'page' => $page,
-                    'limit' => $limit,
-                    'pages' => ceil($total / $limit),
+                    'page' => (int) $page,
+                    'limit' => (int) $limit,
+                    'pages' => (int) ceil($total / $limit),
                 ],
             ];
     
