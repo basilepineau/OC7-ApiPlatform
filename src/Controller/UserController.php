@@ -19,9 +19,48 @@ use Symfony\Component\Serializer\SerializerInterface as SymfonySerializerInterfa
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Annotation\Security;
+use OpenApi\Annotations as OA;
 
 class UserController extends AbstractController
-{
+{       
+    
+    /**
+     * Cette méthode permet de récupérer l'ensemble des users associés au customer qui exécute la requête.
+     *
+     * @OA\Response(
+     *     response=200,
+     *     description="Retourne la liste des users",
+     *     @OA\JsonContent(
+     *        type="array",
+     *        @OA\Items(ref=@Model(type=User::class, groups={"getUsers"}))
+     *     )
+     * )
+     * 
+     * @OA\Parameter(
+     *     name="page",
+     *     in="query",
+     *     required=true,
+     *     description="La page que l'on veut récupérer",
+     *     @OA\Schema(type="int")
+     * )
+     *
+     * @OA\Parameter(
+     *     name="limit",
+     *     in="query",
+     *     description="Le nombre d'éléments que l'on veut récupérer",
+     *     @OA\Schema(type="int")
+     * )
+     * @OA\Tag(name="Users")
+     * @Security(name="Bearer")
+     *
+     * @param UserRepository $userRepository
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param TagAwareCacheInterface $cachePool
+     * @return JsonResponse
+    */
     #[Route('/api/users', name: 'app_users', methods: ['GET'])]
     #[IsGranted('view_users', message: "Accès refusé !")] 
     public function getUsersByCustomer(
@@ -50,9 +89,9 @@ class UserController extends AbstractController
                 'data' => $users,
                 'pagination' => [
                     'total' => $total,
-                    'page' => $page,
-                    'limit' => $limit,
-                    'pages' => ceil($total / $limit),
+                    'page' => (int) $page,
+                    'limit' => (int) $limit,
+                    'pages' => (int) ceil($total / $limit),
                 ],
             ];
     
