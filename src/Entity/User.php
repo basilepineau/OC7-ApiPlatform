@@ -4,9 +4,16 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation\Groups;
+// use JMS\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Hateoas\Configuration\Annotation as Hateoas;
 use Symfony\Component\Validator\Constraints as Assert;
+use ApiPlatform\Metadata\ApiResource;
+
+#[ApiResource(
+    normalizationContext: ['groups' => ['getUsers']],
+    denormalizationContext: ['groups' => ['getUsers']]
+)]
 
 #[Hateoas\Relation(
     "collection",
