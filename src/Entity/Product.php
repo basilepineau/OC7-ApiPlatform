@@ -9,10 +9,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Hateoas\Configuration\Annotation as Hateoas;
 use ApiPlatform\Metadata\ApiResource;
+use App\DataProvider\ProductDataProvider;
 
 #[ApiResource(
     normalizationContext: ['groups' => ['getProducts']],
-    denormalizationContext: ['groups' => ['getProducts']]
+    denormalizationContext: ['groups' => ['getProducts']],
+    provider: ProductDataProvider::class
 )]
 
 #[Hateoas\Relation(
