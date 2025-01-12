@@ -9,10 +9,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Hateoas\Configuration\Annotation as Hateoas;
 use Symfony\Component\Validator\Constraints as Assert;
 use ApiPlatform\Metadata\ApiResource;
+use App\DataProvider\UserDataProvider;
 
 #[ApiResource(
     normalizationContext: ['groups' => ['getUsers']],
-    denormalizationContext: ['groups' => ['getUsers']]
+    denormalizationContext: ['groups' => ['getUsers']],
+    provider: UserDataProvider::class
 )]
 
 #[Hateoas\Relation(
